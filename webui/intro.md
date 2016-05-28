@@ -1,7 +1,7 @@
 Introduction
 ============
 
-``webui`` is a single-page web application that connects to :doc:`deadapi </server/deadapi>` to provide the following functions:
+`webui` is a single-page web application that connects to [`deadapi`](/server/deadapi) to provide the following functions:
 
 * access rules management
 * point of access management
