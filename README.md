@@ -1,2 +1,0 @@
-# docs
-Deadlock documentation.
