@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
+
 # Deadlock documentation build configuration file, created by
 # sphinx-quickstart on Sat May 28 16:02:24 2016.
 #
@@ -236,7 +236,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Deadlock.tex', 'Deadlock Documentation',
-     'FMFI ŠVT', 'manual'),
+     u'FMFI ŠVT', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
