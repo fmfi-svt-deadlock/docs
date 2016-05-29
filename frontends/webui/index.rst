@@ -1,5 +1,5 @@
-`webui` -- the Deadlock web interface
-=====================================
+``webui`` -- the Deadlock web interface
+=======================================
 
 Contents:
 
