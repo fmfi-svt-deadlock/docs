@@ -6,6 +6,8 @@
 # This file is execfile()d with the current directory set to its
 # containing dir.
 
+import recommonmark
+from recommonmark.transform import AutoStructify
 from recommonmark.parser import CommonMarkParser
 import sphinx_rtd_theme
 
@@ -19,6 +21,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.graphviz'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -145,3 +148,7 @@ html_use_smartypants = True
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Deadlockdoc'
+
+def setup(app):
+    app.add_config_value('recommonmark_config', {}, True)
+    app.add_transform(AutoStructify)

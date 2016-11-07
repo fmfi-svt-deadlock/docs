@@ -19,6 +19,7 @@ Table of contents
    deployment
    rules
    dev-intro
+   rationale/index
    protocols/index
    server/index
    controller/index
