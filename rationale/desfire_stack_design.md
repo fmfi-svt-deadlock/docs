@@ -166,6 +166,58 @@ This layer presents upper layers with an abstract `ISO/IEC 14443` PCD API and im
 
 #### Abstract API
 
-The biggest design challenge for this driver is the abstract API. This API has to be abstract enough so that drivers for various readers implementing it can be written, however, it should also be easy to comprehend, should adhere to the `ISO/IEC 14443-3` standard and, ideally, easy to implement.
+The biggest design challenge for this driver is the abstract API. This API has to be abstract enough so that drivers for various readers implementing it can be written, however, it should also be easy to comprehend, should adhere to the `ISO/IEC 14443-3` standard and, ideally, easy to implement. Naming convention will be similar to the one used previously: 'A'-related functions end with `A`, B-related functions end with `B`, common functions end with `AB`.
 
-TODO.
+Transmission methods in `ISO/IEC 14443-3` parts A and B are different enough that they won't share any code. It is therefore possible to design API only for part A and easily add part B later.
+
+Part A of the standard defines transmission of 3 different types of frames:
+
+  - Short frame: transmits 7 bits.
+  - Standard frame: Used for data exchange and can transmit several bytes with parity.
+  - Bit oriented anticollision frame: 7 byte long frame spit anywhere into two parts. First part is transmitted by the PCD, second part is added by the PICC. It is used during bit-oriented anticollision loop.
+
+`ISO/IEC 14443-3` specifies different communication methods (different modulation type / index, different encoding) for part A and B. This driver should support setting these modes, various other communication parameters within these modes as defined by the standard, and should also be able to advertise its capabilities. Communication speeds can't be arbitrary and are defined by `ISO/IEC 14443-4` as `1 etu = 128 / (D x fc)`, where `etu` is the elementary time unit (duration of one bit), `fc` is the carrier frequency (defined in `ISO/IEC 14443-2` to be `$ 13.56 MHz \pm 7 kHz $`) and `D` is integer divisor, which may be `1`, `2`, `4` or `8`. This paradoxically means that increasing the divisor also increases the communication speed.
+
+The readers also usually support a number of extended features, not covered by the `ISO/IEC 14443` standard. For example, the `MFRC522` is able to perform a Mifare authentication using its crypto unit, or a self-test. Upper layers which know how to use these extended features should have access to them, but they should not clutter the main API. That is why each extended feature will have a globally assigned number (in the global abstract header). Then other layers could use these numbers to invoke the extended feature, passing in a "parameter structure". These structures are also defined globally in the abstract header (although in a different file) to allow their re-use.
+
+Ofted PCDs have a maximum data size they can handle at once. `ISO/IEC 14443` standard takes this into account and defines "protocol chaining", a method to send large data units in multiple smaller frames. The upper library handles this, but for it to know whether to use chaining the PCD must be able to report maximum frame size it can handle.
+
+Taking the above into consideration the API may look like this:
+
+  - `activateRFFieldAB(Pcd*)`: Turns the antenna on and creates an unmodulated RF field
+  - `deactivateRFFieldAB(Pcd*)`: Turns off the antenna
+  - `getSupportedParamsAB(Pcd*)`: Returns the supported communication parameters and their combinations
+  - `getSupportedFrameSizesA(Pcd*)`: Returns the maximum supported frame size, both for transmit and receive operations.
+  - `setParamsAB(Pcd*, PcdParams*)`: Sets the communication parameters.
+  - `transceiveShortFrameA(Pcd*, uint8_t data, Frame* response)`: Sends a short frame, waits for a response and returns it
+  - `transceiveStandardFrameA(Pcd*, uint8_t* buffer, uint8_t length, Frame* response)`: Sends a standard frame, waits for a response and returns it. TODO CRC bullshit.
+  - `transceiveAnticollFrameA(Pcd*, uint8_t* buffer, uint8_t length, uint8_t valid_bits, Frame* response)`: Sends an anticoll frame, waits for a response and returns it.
+  - `transmitShortFrameA(Pcd*, uint8_t data)`: Sends a short frame. Returns as soon as possible.
+  - `transmitStandardFrameA(Pcd*, uint8_t* buffer, uint8_t length)`: Sends a standard frame. Returns as soon as possible.
+  - `transmitAnticollFrameA(Pcd*, uint8_t buffer, uint8_t length, uint8_t valid_bits, Frame* response)`: Sends an anticollision frame. Returns as soon as possible.
+  - `waitForResponseA(Pcd*, Frame* response)`: This function blocks until either the response is received or timeout occurs. The timeout is counted from the start of the last transmission as defined in the standard.
+  - `getResponseA(Pcd*, Frame* response)`: This function will return the last received response. It may be used only once per received response.
+
+##### Abstract API State transitions
+
+```eval_rst
+
+.. graphviz::
+
+    digraph card_state_transitions {
+        ANTENNA_OFF -> READY [label="activateRFField()"]
+        READY -> ANTENNA_OFF [label="deactivateRFField()"]
+        READY -> BUSY [label="transceive.*()\ntransmit.*()"]
+        BUSY -> GOT_RESPONSE [label="received response"]
+        GOT_RESPONSE -> READY [label="getResponseA()\nwaitForResponseA()\ntransceive.*() returns"]
+    }
+
+```
+
+#### Driver-specific API
+
+So far only abstract API encapsulated in an `Pcd` structure was described. This driver-specific API will be used by the board-specific initialization code to initialize the `MFRC522` itself and construct the `Pcd` structure. Implementation of this API is straightforward and will not be covered here.
+
+#### Threading and memory management
+
+This library will be thread safe. It will carry sole responsibility for allocating and destroying `Pcd` structures. Basically the same rules apply as for `ISO/IEC 14443A` protocol library.
