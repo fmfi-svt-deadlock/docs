@@ -29,7 +29,9 @@ This implies nice modular design. If done properly, parts of this stack may be r
 Existing designs
 ----------------
 
-The obvious thing to consider is to use some existing opensource implementation of this stack. Unfortunately most libraries strictly adhere to design principle "fuck modularity, everyone will be using just one MFRC522 over SPI with Arduino reading only UIDs" and implement all the afromentioned funcionality in one file of spaghetti code. Unfortunately such implementations are unusable for us.
+The obvious thing to consider is to use some existing opensource implementation of this stack. Unfortunately most embedded libraries strictly adhere to design principle "fuck modularity, everyone will be using just one MFRC522 over SPI with Arduino reading only UIDs" and implement all the afromentioned funcionality in one file of spaghetti code. Unfortunately such implementations are unusable for us.
+
+One very good implementation is `librfid`. Unfortunately this library is hard to integrate with ChibiOS and is not designed for embedded environment.
 
 Card stack design
 -----------------
